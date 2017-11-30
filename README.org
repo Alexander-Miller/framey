@@ -1,0 +1,11 @@
+* Framey The Helpful Framey
+
+Teaching emacs how to use a frame as a pretty popup.
+Very early work in progress.
+
+For best results with i3:
+
+#+BEGIN_SRC i3wm-config
+  for_window [class="Emacs" instance="FRAMEY"] floating enable
+  for_window [class="Emacs" instance="FRAMEY"] border pixel 1
+#+END_SRC
