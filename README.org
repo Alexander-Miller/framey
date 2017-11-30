@@ -1,4 +1,4 @@
-* Framey The Helpful Framey
+* Framey The Helpful Frame
 
 Teaching emacs how to use a frame as a pretty popup.
 Very early work in progress.
