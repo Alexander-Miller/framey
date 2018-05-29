@@ -56,37 +56,28 @@
 
 (defsubst framey-make-frame ()
   "Create a new framey frame."
-   (make-frame
-    `((name . "FRAMEY")
-      (width . ,framey-default-width)
-      (parent-frame . ,(selected-frame))
-      (no-accept-focus . t)
-      (height . ,framey-default-height)
-      (min-width . t)
-      (min-height . t)
-      (internal-border-width . 2)
-      (unsplittable . t)
-      (no-other-frame . t)
-      (undecorated . t)
-      (vertical-scroll-bars . nil)
-      (horizontal-scroll-bars . nil)
-      (minibuffer . ,framey-use-minibuffer)
-      (no-special-glyphs . t)
-      (visibility . nil)
-      (cursor-type . nil)
-      (left-fringe . 2)
-      (right-fringe . 2))))
+  (make-frame
+   `((name                   . "FRAMEY")
+     (width                  . ,framey-default-width)
+     (parent-frame           . ,(selected-frame))
+     (no-accept-focus        . nil)
+     (height                 . ,framey-default-height)
+     (min-width              . t)
+     (min-height             . t)
+     (internal-border-width  . 2)
+     (unsplittable           . t)
+     (no-other-frame         . t)
+     (undecorated            . t)
+     (vertical-scroll-bars   . nil)
+     (horizontal-scroll-bars . nil)
+     (minibuffer             . ,framey-show-minibuffer)
+     (no-special-glyphs      . t)
+     (visibility             . nil)
+     (cursor-type            . nil)
+     (left-fringe            . 2)
+     (right-fringe           . 2))))
 
-(defvar framey-frame (-let [f (framey-make-frame)]
-                       (make-frame-invisible f)
-                       f))
-
-(defun framey-get-or-create ()
-  "Get framey.
-Create it if needed."
-   (unless (frame-live-p framey-frame)
-     (setq framey-frame (framey-make-frame)))
-  framey-frame)
+(defvar framey--frame (framey-make-frame))
 
 (defun framey--horizontal-center (frame &optional y-pos)
   "Horizontally center FRAME on screen.
@@ -115,9 +106,8 @@ If Y-POS is not given position frame 10% off the top of the screen."
 (defun framey--custom-helm-rule (buffer __alist __plist)
   "Custom shackle rule to show BUFFER using framey."
   (condition-case _
-      (-let [framey (framey-get-or-create)]
-        (-let [inhibit-redisplay t]
-        (set-frame-parameter framey 'parent-frame (selected-frame))
+      (-let [framey (framey-make-frame)]
+        (setq framey--frame framey)
         (-let [[_ height width] (framey--get-buffer-size-info buffer)]
           (set-frame-size framey width height)
           (framey--horizontal-center framey))
@@ -133,7 +123,7 @@ If Y-POS is not given position frame 10% off the top of the screen."
         (select-window (selected-window))
         (helm-update)
         (message "")
-        (helm-window)))
+        (helm-window))
     (error (framey--helm-canceller))))
 
 ;;;###autoload
