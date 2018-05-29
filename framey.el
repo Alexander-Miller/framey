@@ -13,7 +13,12 @@
 (require 'ht)
 (require 'cl-lib)
 
-(defcustom framey-use-minibuffer nil
+(defcustom framey-show-minibuffer nil
+  "TODO."
+  :type 'boolean
+  :group 'framey)
+
+(defcustom framey-show-modeline nil
   "TODO."
   :type 'boolean
   :group 'framey)
@@ -31,8 +36,6 @@
 (defvar framey--shackle-rule '("*helm.*" :custom framey--custom-helm-rule :select t :align below :size 0.33 :regexp t))
 
 (defvar framey-pos-info nil)
-
-
 
 (cl-defstruct framey-pos-info
   height
@@ -121,8 +124,8 @@ If Y-POS is not given position frame 10% off the top of the screen."
         (select-frame framey)
         (delete-other-windows)
         (display-buffer-record-window 'window (selected-window) buffer)
-        ;; (set-window-parameter (selected-window) 'mode-line-format 'none)
-        (setq-local mode-line-format " ")
+        (unless framey-show-modeline
+          (set-window-parameter (selected-window) 'mode-line-format 'none))
         (set-window-dedicated-p (selected-window) nil)
         (set-window-buffer (selected-window) buffer)
         (framey--horizontal-center framey)
