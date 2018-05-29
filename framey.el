@@ -92,12 +92,11 @@ If Y-POS is not given position frame 10% off the top of the screen."
 
 (defun framey--helm-canceller (&rest _)
   "Make framey invisible after a helm action or abort."
-  (when (and framey-frame
-             (frame-live-p framey-frame)
-             (frame-visible-p framey-frame))
-    (set-frame-parameter framey-frame 'parent-frame nil)
-    (set-frame-position framey-frame 1366 768)
-    (delete-frame framey-frame)
+  (when (frame-live-p framey--frame)
+    ;; (make-frame-invisible framey--frame)
+    (set-frame-position framey--frame 9999 9999)
+    (set-frame-parameter framey--frame 'parent-frame nil)
+    (delete-frame framey--frame)
     (select-window (selected-window))))
 
 (add-hook 'helm-quit-hook #'framey--helm-canceller)
