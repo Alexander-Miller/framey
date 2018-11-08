@@ -84,6 +84,7 @@
              (right-fringe           . 2)))))
   (set-frame-position framey--frame 9999 9999)
   (set-frame-parameter framey--frame 'parent-frame (selected-frame))
+  (set-frame-parameter framey--frame 'desktop-dont-save t)
   framey--frame)
 
 (defun framey-kill ()
