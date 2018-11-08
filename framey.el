@@ -13,7 +13,7 @@
 (require 'ht)
 (require 'cl-lib)
 
-(defcustom framey-show-minibuffer nil
+(defcustom framey-show-minibuffer t
   "TODO."
   :type 'boolean
   :group 'framey)
@@ -82,6 +82,7 @@
              (cursor-type            . nil)
              (left-fringe            . 2)
              (right-fringe           . 2)))))
+  (set-frame-position framey--frame 9999 9999)
   (set-frame-parameter framey--frame 'parent-frame (selected-frame))
   framey--frame)
 
@@ -171,8 +172,6 @@ Otherwise calls `quit-window' with given prefix ARG."
         (add-to-list 'shackle-rules framey--shackle-help-rule))
     (setq shackle-rules (delete framey--shackle-rule shackle-rules))
     (setq shackle-rules (delete framey--shackle-help-rule shackle-rules))))
-
-(setf framey-show-minibuffer t)
 
 (provide 'framey)
 
