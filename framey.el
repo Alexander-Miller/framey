@@ -162,6 +162,11 @@ Otherwise calls `quit-window' with given prefix ARG."
   (with-no-warnings
     (define-key helpful-mode-map [remap quit-window] #'framey-quit-window)))
 
+(defun framey--on-frame-kill (frame)
+  "Select FRAME's parent when FRAME is deleted, if it has one."
+  (--when-let (frame-parent frame)
+    (x-focus-frame it)))
+
 ;;;###autoload
 (define-minor-mode framey-mode
   ""
@@ -170,8 +175,10 @@ Otherwise calls `quit-window' with given prefix ARG."
   :lighter    nil
   (if framey-mode
       (progn
+        (add-hook 'delete-frame-functions #'framey--on-frame-kill)
         (add-to-list 'shackle-rules framey--shackle-rule)
         (add-to-list 'shackle-rules framey--shackle-help-rule))
+    (remove-hook 'delete-frame-functions #'framey--on-frame-kill)
     (setq shackle-rules (delete framey--shackle-rule shackle-rules))
     (setq shackle-rules (delete framey--shackle-help-rule shackle-rules))))
 
