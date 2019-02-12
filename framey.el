@@ -124,6 +124,7 @@ If Y-POS is not given position frame 10% off the top of the screen."
           (set-frame-size framey width height)
           (framey--horizontal-center framey))
         (select-frame framey t)
+        (setq helm--buffer-in-new-frame-p t)
         (delete-other-windows)
         (display-buffer-record-window 'window (selected-window) buffer)
         (unless framey-show-modeline
