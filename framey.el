@@ -84,7 +84,6 @@
              (left-fringe            . 2)
              (right-fringe           . 2)))))
   (set-frame-position framey--frame 9999 9999)
-  (set-frame-parameter framey--frame 'parent-frame (selected-frame))
   (set-frame-parameter framey--frame 'desktop-dont-save t)
   framey--frame)
 
@@ -99,7 +98,9 @@
   "Horizontally center FRAME on screen.
 If Y-POS is not given position frame 10% off the top of the screen."
   (let* ((move-frame-functions)
-         (selfr (selected-frame))
+         (selfr (if (eq framey--frame (selected-frame))
+                    (frame-parent framey--frame)
+                  (selected-frame)))
          (scr-w (frame-pixel-width selfr))
          (scr-h (frame-pixel-height selfr))
          (frm-w (frame-pixel-width frame)))
