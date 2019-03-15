@@ -131,12 +131,20 @@ If Y-POS is not given position frame 10% off the top of the screen."
           (set-window-parameter (selected-window) 'mode-line-format 'none))
         (set-window-dedicated-p (selected-window) nil)
         (set-window-buffer (selected-window) buffer)
-        (helm-update)
         (force-mode-line-update t)
-        (run-with-timer 0.01 nil #'helm-update)
+        (run-with-idle-timer
+         0.01 nil
+         (lambda ()
+           (setf helm--buffer-in-new-frame-p nil)
+           (helm-update)))
         (x-focus-frame framey)
+        (redirect-frame-focus (frame-parent framey) framey)
         (helm-window))
     (error (framey--helm-canceller))))
+
+(defun framey--helm-persistent-action-advice (fun &rest args)
+  (let ((helm--buffer-in-new-frame-p t))
+    (apply fun args)))
 
 (defun framey--custom-help-rule (buffer __alist __plist)
   "Custom shackle rule to show helpful BUFFER using framey."
@@ -178,10 +186,12 @@ Otherwise calls `quit-window' with given prefix ARG."
       (progn
         (add-hook 'delete-frame-functions #'framey--on-frame-kill)
         (add-to-list 'shackle-rules framey--shackle-rule)
-        (add-to-list 'shackle-rules framey--shackle-help-rule))
+        (add-to-list 'shackle-rules framey--shackle-help-rule)
+        (advice-add 'helm-execute-persistent-action :around #'framey--helm-persistent-action-advice))
     (remove-hook 'delete-frame-functions #'framey--on-frame-kill)
     (setq shackle-rules (delete framey--shackle-rule shackle-rules))
-    (setq shackle-rules (delete framey--shackle-help-rule shackle-rules))))
+    (setq shackle-rules (delete framey--shackle-help-rule shackle-rules))
+    (advice-remove 'helm-execute-persistent-action #'framey--helm-persistent-action-advice)))
 
 (provide 'framey)
 
