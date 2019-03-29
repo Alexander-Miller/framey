@@ -120,45 +120,49 @@ If Y-POS is not given position frame 10% off the top of the screen."
 (defun framey--custom-helm-rule (buffer __alist __plist)
   "Custom shackle rule to show BUFFER using framey."
   (condition-case _
-      (-let [framey (framey-make-frame)]
-        (-let [[_ height width] (framey--get-buffer-size-info buffer)]
-          (set-frame-size framey width height)
-          (framey--horizontal-center framey))
-        (select-frame framey t)
-        (setq helm--buffer-in-new-frame-p t)
-        (delete-other-windows)
-        (display-buffer-record-window 'window (selected-window) buffer)
-        (unless framey-show-modeline
-          (set-window-parameter (selected-window) 'mode-line-format 'none))
-        (set-window-dedicated-p (selected-window) nil)
-        (set-window-buffer (selected-window) buffer)
-        (force-mode-line-update t)
-        (run-with-idle-timer
-         0.01 nil
-         (lambda ()
-           (setf helm--buffer-in-new-frame-p nil)
-           (helm-update)))
-        (x-focus-frame framey)
-        (redirect-frame-focus (frame-parent framey) framey)
-        (helm-window))
+      (when (display-graphic-p)
+        (-let [framey (framey-make-frame)]
+          (-let [[_ height width] (framey--get-buffer-size-info buffer)]
+            (set-frame-size framey width height)
+            (framey--horizontal-center framey))
+          (select-frame framey t)
+          (setq helm--buffer-in-new-frame-p t)
+          (delete-other-windows)
+          (display-buffer-record-window 'window (selected-window) buffer)
+          (unless framey-show-modeline
+            (set-window-parameter (selected-window) 'mode-line-format 'none))
+          (set-window-dedicated-p (selected-window) nil)
+          (set-window-buffer (selected-window) buffer)
+          (force-mode-line-update t)
+          (run-with-idle-timer
+           0.01 nil
+           (lambda ()
+             (setf helm--buffer-in-new-frame-p nil)
+             (helm-update)))
+          (x-focus-frame framey)
+          (redirect-frame-focus (frame-parent framey) framey)
+          (helm-window)))
     (error (framey--helm-canceller))))
 
 (defun framey--helm-persistent-action-advice (fun &rest args)
+  "Advice to allow tabbing in helm to work.
+Will call original FUN with ARGS with `helm--buffer-in-new-frame-p' set to t."
   (let ((helm--buffer-in-new-frame-p t))
     (apply fun args)))
 
 (defun framey--custom-help-rule (buffer __alist __plist)
   "Custom shackle rule to show helpful BUFFER using framey."
-  (-let [framey (framey-make-frame)]
-    (-let [[_ height width] [20 33 80]]
-      (set-frame-size framey width height)
-      (framey--horizontal-center framey))
-    (select-frame framey)
-    (delete-other-windows)
-    (switch-to-buffer buffer t t)
-    (unless framey-show-modeline
-      (set-window-parameter (selected-window) 'mode-line-format 'none))
-    (selected-window)))
+  (when (display-graphic-p)
+    (-let [framey (framey-make-frame)]
+      (-let [[_ height width] [20 33 80]]
+        (set-frame-size framey width height)
+        (framey--horizontal-center framey))
+      (select-frame framey)
+      (delete-other-windows)
+      (switch-to-buffer buffer :norecord :same-window)
+      (unless framey-show-modeline
+        (set-window-parameter (selected-window) 'mode-line-format 'none))
+      (selected-window))))
 
 (defun framey-quit-window (&optional arg)
   "Cancels framey if current window is a child frames.
