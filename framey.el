@@ -46,11 +46,13 @@
   (make-framey-pos-info :width 50 :height 14))
 
 (setq framey-pos-info
-      (ht ("*helm semantic/imenu*" (make-framey-pos-info :height 20 :width 45))
-          ("*helm mini*"           (make-framey-pos-info :height 12 :width 100))
-          ("*helm-ag*"             (make-framey-pos-info :height 25 :width 120))
-          ("*helm-xref*"           (make-framey-pos-info :height 25 :width 100))
-          ("*helm find files*"     (make-framey-pos-info :height 12 :width 60))))
+      (ht ("*helm semantic/imenu*"  (make-framey-pos-info :height 20 :width 45))
+          ("*helm mini*"            (make-framey-pos-info :height 12 :width 100))
+          ("*helm-ag*"              (make-framey-pos-info :height 25 :width 120))
+          ("*helm-xref*"            (make-framey-pos-info :height 25 :width 100))
+          ("*helm find files*"      (make-framey-pos-info :height 12 :width 60))
+          ("*helm org inbuffer*"    (make-framey-pos-info :height 25 :width 75))
+          ("*helm-mode-org-refile*" (make-framey-pos-info :height 20 :width 100))))
 
 (defvar framey--frame nil)
 
