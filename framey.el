@@ -9,6 +9,7 @@
 (require 'dash)
 (require 'shackle)
 (require 'helm)
+(require 'posframe)
 (require 's)
 (require 'ht)
 (require 'cl-lib)
@@ -43,7 +44,7 @@
   width)
 
 (defvar framey-default-size
-  (make-framey-pos-info :width 50 :height 14))
+  (make-framey-pos-info :width 60 :height 14))
 
 (setq framey-pos-info
       (ht ("*helm semantic/imenu*"  (make-framey-pos-info :height 20 :width 45))
@@ -54,40 +55,9 @@
           ("*helm org inbuffer*"    (make-framey-pos-info :height 25 :width 75))
           ("*helm-mode-org-refile*" (make-framey-pos-info :height 20 :width 100))))
 
-(defvar framey--frame nil)
-
 (defsubst framey--get-buffer-size-info (buffer)
   "Fetches the size info for BUFFER, with `framey-default-size' as fallback."
   (ht-get framey-pos-info (buffer-name buffer) framey-default-size))
-
-(defsubst framey-make-frame ()
-  "Create a new framey frame."
-  (when (or (null framey--frame)
-            (not (frame-live-p framey--frame)))
-    (setq framey--frame
-          (make-frame
-           `((name                   . "FRAMEY")
-             (width                  . ,framey-default-width)
-             (parent-frame           . ,(selected-frame))
-             (no-accept-focus        . nil)
-             (height                 . ,framey-default-height)
-             (min-width              . t)
-             (min-height             . t)
-             (internal-border-width  . 2)
-             (unsplittable           . t)
-             (no-other-frame         . t)
-             (undecorated            . t)
-             (vertical-scroll-bars   . nil)
-             (horizontal-scroll-bars . nil)
-             (minibuffer             . ,framey-show-minibuffer)
-             (no-special-glyphs      . t)
-             (visibility             . nil)
-             (cursor-type            . nil)
-             (left-fringe            . 2)
-             (right-fringe           . 2)))))
-  (set-frame-position framey--frame 9999 9999)
-  (set-frame-parameter framey--frame 'desktop-dont-save t)
-  framey--frame)
 
 (defun framey-kill ()
   "Kill all framey frames."
@@ -96,55 +66,48 @@
     (when (string= "FRAMEY" (frame-parameter it 'name))
       (delete-frame it))))
 
-(defun framey--horizontal-center (frame &optional y-pos)
-  "Horizontally center FRAME on screen.
-If Y-POS is not given position frame 10% off the top of the screen."
-  (let* ((move-frame-functions)
-         (selfr (if (eq framey--frame (selected-frame))
-                    (frame-parent framey--frame)
-                  (selected-frame)))
-         (scr-w (frame-pixel-width selfr))
-         (scr-h (frame-pixel-height selfr))
-         (frm-w (frame-pixel-width frame)))
-    (set-frame-position frame
-                        (- (/ scr-w 2) (/ frm-w 2))
-                        (or y-pos (round (* 0.1 scr-h))))))
+(defun framey-quit-window (&optional arg)
+  "Cancels framey if current window is a child frames.
+Otherwise calls `quit-window' with given prefix ARG."
+  (interactive "P")
+  (-if-let (parent (frame-parameter (selected-frame) 'parent-frame))
+      (progn
+        (make-frame-invisible (selected-frame))
+        (x-focus-frame parent))
+    (quit-window arg)))
 
-(defun framey--helm-canceller (&rest _)
-  "Make framey invisible after a helm action or abort."
-  (when (frame-live-p framey--frame)
-    (set-frame-position framey--frame 9999 9999)
-    (x-focus-frame (frame-parent framey--frame))))
+(defun framey--poshandler (info)
+  "Framey's position handler.
+Sets the frame in the upper center based on INFO."
+  (cons (/ (- (plist-get info :parent-frame-width)
+              (plist-get info :posframe-width))
+           2)
+        (round (* 0.05 (plist-get info :parent-frame-height)))))
 
-(add-hook 'helm-quit-hook #'framey--helm-canceller)
-(add-hook 'helm-after-action-hook #'framey--helm-canceller)
+;;; Helpful -----------------------------------
 
-(defun framey--custom-helm-rule (buffer __alist __plist)
-  "Custom shackle rule to show BUFFER using framey."
-  (condition-case _
-      (when (display-graphic-p)
-        (-let [framey (framey-make-frame)]
-          (-let [[_ height width] (framey--get-buffer-size-info buffer)]
-            (set-frame-size framey width height)
-            (framey--horizontal-center framey))
-          (select-frame framey t)
-          (setq helm--buffer-in-new-frame-p t)
-          (delete-other-windows)
-          (display-buffer-record-window 'window (selected-window) buffer)
-          (unless framey-show-modeline
-            (set-window-parameter (selected-window) 'mode-line-format 'none))
-          (set-window-dedicated-p (selected-window) nil)
-          (set-window-buffer (selected-window) buffer)
-          (force-mode-line-update t)
-          (run-with-idle-timer
-           0.01 nil
-           (lambda ()
-             (setf helm--buffer-in-new-frame-p nil)
-             (helm-update)))
-          (x-focus-frame framey)
-          (redirect-frame-focus (frame-parent framey) framey)
-          (helm-window)))
-    (error (framey--helm-canceller))))
+(defun framey--custom-help-rule (buffer __alist __plist)
+  "Custom shackle rule to show helpful BUFFER using framey."
+  (-let [[_ height width] (framey--get-buffer-size-info buffer)]
+    (posframe-show
+     buffer
+     :poshandler #'framey--poshandler
+     :respect-header-line t
+     :min-width width
+     :min-height height
+     :internal-border-width 2
+     :internal-border-color "#1D1D1D"
+     :override-parameters '((no-accept-focus . nil)))
+    (-let [frame (buffer-local-value 'posframe--frame buffer)]
+      (setf truncate-lines t)
+      (select-frame frame)
+      (selected-window))))
+
+(with-eval-after-load 'helpful
+  (with-no-warnings
+    (define-key helpful-mode-map [remap quit-window] #'framey-quit-window)))
+
+;;; Helm -----------------------------------
 
 (defun framey--helm-persistent-action-advice (fun &rest args)
   "Advice to allow tabbing in helm to work.
@@ -152,36 +115,26 @@ Will call original FUN with ARGS with `helm--buffer-in-new-frame-p' set to t."
   (let ((helm--buffer-in-new-frame-p t))
     (apply fun args)))
 
-(defun framey--custom-help-rule (buffer __alist __plist)
-  "Custom shackle rule to show helpful BUFFER using framey."
-  (when (display-graphic-p)
-    (-let [framey (framey-make-frame)]
-      (-let [[_ height width] [20 33 80]]
-        (set-frame-size framey width height)
-        (framey--horizontal-center framey))
-      (select-frame framey)
-      (delete-other-windows)
-      (switch-to-buffer buffer :norecord :same-window)
-      (unless framey-show-modeline
-        (set-window-parameter (selected-window) 'mode-line-format 'none))
-      (selected-window))))
+(defun framey--helm-cleanup (orig-func)
+  "Call ORIG-FUNC without helm's delete-frame-fuction."
+  (cl-letf (((symbol-function 'bury-buffer) #'ignore)
+            ((symbol-function 'helm--delete-frame-function) #'ignore))
+    (funcall orig-func)))
 
-(defun framey-quit-window (&optional arg)
-  "Cancels framey if current window is a child frames.
-Otherwise calls `quit-window' with given prefix ARG."
-  (interactive "P")
-  (if (string= "FRAMEY" (frame-parameter (selected-frame) 'name))
-      (framey--helm-canceller)
-    (quit-window arg)))
-
-(with-eval-after-load 'helpful
-  (with-no-warnings
-    (define-key helpful-mode-map [remap quit-window] #'framey-quit-window)))
-
-(defun framey--on-frame-kill (frame)
-  "Select FRAME's parent when FRAME is deleted, if it has one."
-  (--when-let (frame-parent frame)
-    (x-focus-frame it)))
+(defun framey--display-helm (buffer-name _)
+  "Display the given helm BUFFER-NAME in a child frame."
+  (-let* ((buffer (get-buffer buffer-name))
+          ([_ height width] (framey--get-buffer-size-info buffer)))
+    (posframe-show
+     buffer
+     :poshandler #'framey--poshandler
+     :respect-header-line t
+     :min-width width
+     :min-height height
+     :internal-border-width 2
+     :internal-border-color "#1D1D1D")
+    (with-current-buffer buffer
+      (setq-local truncate-lines t))))
 
 ;;;###autoload
 (define-minor-mode framey-mode
@@ -191,13 +144,13 @@ Otherwise calls `quit-window' with given prefix ARG."
   :lighter    nil
   (if framey-mode
       (progn
-        (add-hook 'delete-frame-functions #'framey--on-frame-kill)
-        (add-to-list 'shackle-rules framey--shackle-rule)
+        (setf helm-display-function #'framey--display-helm)
         (add-to-list 'shackle-rules framey--shackle-help-rule)
+        (advice-add 'helm-cleanup :around #'framey--helm-cleanup)
         (advice-add 'helm-execute-persistent-action :around #'framey--helm-persistent-action-advice))
-    (remove-hook 'delete-frame-functions #'framey--on-frame-kill)
-    (setq shackle-rules (delete framey--shackle-rule shackle-rules))
-    (setq shackle-rules (delete framey--shackle-help-rule shackle-rules))
+    (setf helm-display-function #'framey--display-helm)
+    (setf shackle-rules (delete framey--shackle-help-rule shackle-rules))
+    (advice-remove 'helm-cleanup #'framey--helm-cleanup)
     (advice-remove 'helm-execute-persistent-action #'framey--helm-persistent-action-advice)))
 
 (provide 'framey)
