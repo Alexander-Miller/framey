@@ -13,6 +13,7 @@
 (require 's)
 (require 'ht)
 (require 'cl-lib)
+(require 'inline)
 
 (defcustom framey-show-minibuffer t
   "TODO."
@@ -34,30 +35,35 @@
   :type 'number
   :group  'framey)
 
-(defvar framey--shackle-rule '("*helm.*" :custom framey--custom-helm-rule :select t :align below :size 0.33 :regexp t))
-(defvar framey--shackle-help-rule '(helpful-mode  :custom framey--custom-help-rule))
-
-(defvar framey-pos-info nil)
-
 (cl-defstruct framey-pos-info
   height
   width)
 
+(defvar framey--shackle-rule '("*helm.*" :custom framey--custom-helm-rule :regexp t))
+(defvar framey--shackle-help-rule '(helpful-mode :custom framey--custom-help-rule))
+
+(defconst framey-pos-info
+  (ht ("*helm semantic/imenu*"  (make-framey-pos-info :height 20 :width 45))
+      ("*helm mini*"            (make-framey-pos-info :height 12 :width 100))
+      ("*helm-ag*"              (make-framey-pos-info :height 25 :width 120))
+      ("*helm-xref*"            (make-framey-pos-info :height 25 :width 100))
+      ("*helm find files*"      (make-framey-pos-info :height 12 :width 60))
+      ("*helm org inbuffer*"    (make-framey-pos-info :height 25 :width 75))
+      ("*helm-mode-org-refile*" (make-framey-pos-info :height 20 :width 100))
+      ('helpful-mode            (make-framey-pos-info :height 25 :width 82))))
+
 (defvar framey-default-size
   (make-framey-pos-info :width 60 :height 14))
 
-(setq framey-pos-info
-      (ht ("*helm semantic/imenu*"  (make-framey-pos-info :height 20 :width 45))
-          ("*helm mini*"            (make-framey-pos-info :height 12 :width 100))
-          ("*helm-ag*"              (make-framey-pos-info :height 25 :width 120))
-          ("*helm-xref*"            (make-framey-pos-info :height 25 :width 100))
-          ("*helm find files*"      (make-framey-pos-info :height 12 :width 60))
-          ("*helm org inbuffer*"    (make-framey-pos-info :height 25 :width 75))
-          ("*helm-mode-org-refile*" (make-framey-pos-info :height 20 :width 100))))
 
-(defsubst framey--get-buffer-size-info (buffer)
+(define-inline framey--get-buffer-size-info (buffer)
   "Fetches the size info for BUFFER, with `framey-default-size' as fallback."
-  (ht-get framey-pos-info (buffer-name buffer) framey-default-size))
+  (declare (side-effect-free t))
+  (inline-letevals (buffer)
+    (inline-quote
+     (ht-get framey-pos-info (buffer-name ,buffer)
+             (ht-get framey-pos-info (buffer-local-value 'major-mode ,buffer)
+                     framey-default-size)))))
 
 (defun framey-kill ()
   "Kill all framey frames."
