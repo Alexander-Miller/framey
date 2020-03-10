@@ -48,13 +48,13 @@
       ("*helm-ag*"              (make-framey-pos-info :height 25 :width 120))
       ("*helm-xref*"            (make-framey-pos-info :height 25 :width 100))
       ("*helm find files*"      (make-framey-pos-info :height 12 :width 60))
+      ("*helm locate library*"  (make-framey-pos-info :height 25 :width 100))
       ("*helm org inbuffer*"    (make-framey-pos-info :height 25 :width 75))
       ("*helm-mode-org-refile*" (make-framey-pos-info :height 20 :width 100))
-      ('helpful-mode            (make-framey-pos-info :height 25 :width 82))))
+      ('helpful-mode            (make-framey-pos-info :height 35 :width 82))))
 
 (defvar framey-default-size
   (make-framey-pos-info :width 60 :height 14))
-
 
 (define-inline framey--get-buffer-size-info (buffer)
   "Fetches the size info for BUFFER, with `framey-default-size' as fallback."
