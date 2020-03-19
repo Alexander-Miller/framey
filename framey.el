@@ -1,5 +1,5 @@
 ;;; framey.el --- TODO -*- lexical-binding: t -*-
-;;;
+;; Package-Requires: ((emacs "26.1") (cl-lib "0.5") (dash "2.11.0") (s "1.10.0") (ht "2.2"))
 
 ;;; Commentary:
 ;; TODO
@@ -8,8 +8,6 @@
 
 (require 'dash)
 (require 'shackle)
-(require 'helm)
-(require 'posframe)
 (require 's)
 (require 'ht)
 (require 'cl-lib)
@@ -82,32 +80,54 @@ Otherwise calls `quit-window' with given prefix ARG."
         (x-focus-frame parent))
     (quit-window arg)))
 
-(defun framey--poshandler (info)
+(define-inline framey--poshandler (width)
   "Framey's position handler.
 Sets the frame in the upper center based on INFO."
-  (cons (/ (- (plist-get info :parent-frame-width)
-              (plist-get info :posframe-width))
-           2)
-        (round (* 0.05 (plist-get info :parent-frame-height)))))
+  (inline-letevals (width)
+    (inline-quote
+     (-let [fr (selected-frame)]
+       (cons
+        (- (/ (frame-pixel-width fr) 2)
+           (/ (*,width (frame-char-width fr)) 2))
+        (round (* 0.05 (frame-pixel-height fr))))))))
+
+(defun framey--display (buffer)
+  (let* ((inf    (framey--get-buffer-size-info buffer))
+         (height (framey-pos-info-height inf))
+         (width  (framey-pos-info-width inf))
+         (pos    (framey--poshandler width)))
+    (setf (buffer-local-value 'mode-line-format buffer) nil)
+    (select-window
+     (display-buffer-in-child-frame
+      buffer
+      `((child-frame-parameters
+         .
+         ((left . ,(car pos))
+          (top  . ,(cdr pos))
+          (height . ,height)
+          (width . ,width)
+          (menu-bar-lines . 0)
+          (tool-bar-lines . 0)
+          (line-spacing . 0)
+          (unsplittable . t)
+          (no-other-frame . t)
+          (minibuffer . nil)
+          (no-special-glyphs . t)
+          (undecorated . t)
+          (vertical-scroll-bars . nil)
+          (internal-border-width . 2)
+          ;; (delete-before . TODO)
+          (horizontal-scroll-bars . nil))))))
+    (delete-other-windows)
+    (setf truncate-lines t)
+    (setf mode-line-format nil)
+    (selected-window)))
 
 ;;; Helpful -----------------------------------
 
 (defun framey--custom-help-rule (buffer __alist __plist)
   "Custom shackle rule to show helpful BUFFER using framey."
-  (-let [[_ height width] (framey--get-buffer-size-info buffer)]
-    (posframe-show
-     buffer
-     :poshandler #'framey--poshandler
-     :respect-header-line t
-     :min-width width
-     :min-height height
-     :internal-border-width 2
-     :internal-border-color "#1D1D1D"
-     :override-parameters '((no-accept-focus . nil)))
-    (-let [frame (buffer-local-value 'posframe--frame buffer)]
-      (setf truncate-lines t)
-      (select-frame frame)
-      (selected-window))))
+  (framey--display buffer))
 
 (with-eval-after-load 'helpful
   (with-no-warnings
@@ -129,18 +149,10 @@ Will call original FUN with ARGS with `helm--buffer-in-new-frame-p' set to t."
 
 (defun framey--display-helm (buffer-name _)
   "Display the given helm BUFFER-NAME in a child frame."
-  (-let* ((buffer (get-buffer buffer-name))
-          ([_ height width] (framey--get-buffer-size-info buffer)))
-    (posframe-show
-     buffer
-     :poshandler #'framey--poshandler
-     :respect-header-line t
-     :min-width width
-     :min-height height
-     :internal-border-width 2
-     :internal-border-color "#1D1D1D")
-    (with-current-buffer buffer
-      (setq-local truncate-lines t))))
+  (-let [b (get-buffer buffer-name)]
+    (with-current-buffer b (setq-local helm--buffer-in-new-frame-p t))
+    (framey--display b)
+    (selected-window)))
 
 ;;;###autoload
 (define-minor-mode framey-mode
