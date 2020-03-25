@@ -47,6 +47,7 @@
       ("*helm-xref*"            (make-framey-pos-info :height 25 :width 100))
       ("*helm find files*"      (make-framey-pos-info :height 12 :width 60))
       ("*helm locate library*"  (make-framey-pos-info :height 25 :width 100))
+      ("*helm locate*"          (make-framey-pos-info :height 25 :width 100))
       ("*helm org inbuffer*"    (make-framey-pos-info :height 25 :width 75))
       ("*helm-mode-org-refile*" (make-framey-pos-info :height 20 :width 100))
       ('helpful-mode            (make-framey-pos-info :height 35 :width 82))))
