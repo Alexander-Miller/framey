@@ -37,7 +37,6 @@
   height
   width)
 
-(defvar framey--shackle-rule '("*helm.*" :custom framey--custom-helm-rule :regexp t))
 (defvar framey--shackle-help-rule '(helpful-mode :custom framey--custom-help-rule))
 
 (defconst framey-pos-info
@@ -134,27 +133,6 @@ Sets the frame in the upper center based on INFO."
   (with-no-warnings
     (define-key helpful-mode-map [remap quit-window] #'framey-quit-window)))
 
-;;; Helm -----------------------------------
-
-(defun framey--helm-persistent-action-advice (fun &rest args)
-  "Advice to allow tabbing in helm to work.
-Will call original FUN with ARGS with `helm--buffer-in-new-frame-p' set to t."
-  (let ((helm--buffer-in-new-frame-p t))
-    (apply fun args)))
-
-(defun framey--helm-cleanup (orig-func)
-  "Call ORIG-FUNC without helm's delete-frame-fuction."
-  (cl-letf (((symbol-function 'bury-buffer) #'ignore)
-            ((symbol-function 'helm--delete-frame-function) #'ignore))
-    (funcall orig-func)))
-
-(defun framey--display-helm (buffer-name _)
-  "Display the given helm BUFFER-NAME in a child frame."
-  (-let [b (get-buffer buffer-name)]
-    (with-current-buffer b (setq-local helm--buffer-in-new-frame-p t))
-    (framey--display b)
-    (selected-window)))
-
 ;;;###autoload
 (define-minor-mode framey-mode
   ""
@@ -163,14 +141,16 @@ Will call original FUN with ARGS with `helm--buffer-in-new-frame-p' set to t."
   :lighter    nil
   (if framey-mode
       (progn
-        (setf helm-display-function #'framey--display-helm)
-        (add-to-list 'shackle-rules framey--shackle-help-rule)
-        (advice-add 'helm-cleanup :around #'framey--helm-cleanup)
-        (advice-add 'helm-execute-persistent-action :around #'framey--helm-persistent-action-advice))
-    (setf helm-display-function #'framey--display-helm)
-    (setf shackle-rules (delete framey--shackle-help-rule shackle-rules))
-    (advice-remove 'helm-cleanup #'framey--helm-cleanup)
-    (advice-remove 'helm-execute-persistent-action #'framey--helm-persistent-action-advice)))
+        (when (featurep 'framey-helm)
+          (setf helm-display-function #'framey--display-helm)
+          (advice-add 'helm-cleanup :around #'framey--helm-cleanup)
+          (advice-add 'helm-execute-persistent-action :around #'framey--helm-persistent-action-advice))
+        (add-to-list 'shackle-rules framey--shackle-help-rule))
+    (when (featurep 'framey-helm)
+      (setf helm-display-function #'helm-default-display-buffer)
+      (advice-remove 'helm-cleanup #'framey--helm-cleanup)
+      (advice-remove 'helm-execute-persistent-action #'framey--helm-persistent-action-advice))
+    (setf shackle-rules (delete framey--shackle-help-rule shackle-rules))))
 
 (provide 'framey)
 
