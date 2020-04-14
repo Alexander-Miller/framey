@@ -27,6 +27,21 @@ Will call original FUN with ARGS with `helm--buffer-in-new-frame-p' set to t."
     (framey--display b)
     (selected-window)))
 
+(defun framey--enable-helm ()
+  (setf helm-display-function #'framey--display-helm)
+  (advice-add 'helm-cleanup :around #'framey--helm-cleanup)
+  (advice-add 'helm-execute-persistent-action :around #'framey--helm-persistent-action-advice))
+
+(defun framey--disable-helm ()
+  (setf helm-display-function #'helm-default-display-buffer)
+  (advice-remove 'helm-cleanup #'framey--helm-cleanup)
+  (advice-remove 'helm-execute-persistent-action #'framey--helm-persistent-action-advice))
+
+(add-to-list 'framey--enable-functions #'framey--enable-helm)
+(add-to-list 'framey--disable-functions #'framey--disable-helm)
+
+(when framey-mode (framey-mode))
+
 (provide 'framey-helm)
 
 ;;; framey-helm.el ends here

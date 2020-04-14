@@ -51,6 +51,10 @@
       ("*helm-mode-org-refile*" (make-framey-pos-info :height 20 :width 100))
       ('helpful-mode            (make-framey-pos-info :height 35 :width 82))))
 
+(defvar framey--enable-functions nil)
+
+(defvar framey--disable-functions nil)
+
 (defvar framey-default-size
   (make-framey-pos-info :width 60 :height 14))
 
@@ -121,6 +125,8 @@ Sets the frame in the upper center based on INFO."
     (delete-other-windows)
     (setf truncate-lines t)
     (setf mode-line-format nil)
+    ;; Border won't appear otherwise
+    (select-frame (selected-frame))
     (selected-window)))
 
 ;;; Helpful -----------------------------------
@@ -140,17 +146,10 @@ Sets the frame in the upper center based on INFO."
   :global     t
   :lighter    nil
   (if framey-mode
-      (progn
-        (when (featurep 'framey-helm)
-          (setf helm-display-function #'framey--display-helm)
-          (advice-add 'helm-cleanup :around #'framey--helm-cleanup)
-          (advice-add 'helm-execute-persistent-action :around #'framey--helm-persistent-action-advice))
-        (add-to-list 'shackle-rules framey--shackle-help-rule))
-    (when (featurep 'framey-helm)
-      (setf helm-display-function #'helm-default-display-buffer)
-      (advice-remove 'helm-cleanup #'framey--helm-cleanup)
-      (advice-remove 'helm-execute-persistent-action #'framey--helm-persistent-action-advice))
-    (setf shackle-rules (delete framey--shackle-help-rule shackle-rules))))
+      (dolist (fn framey--enable-functions)
+        (funcall fn))
+    (dolist (fn framey--disable-functions)
+      (funcall fn))))
 
 (provide 'framey)
 
