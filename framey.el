@@ -37,8 +37,6 @@
   height
   width)
 
-(defvar framey--shackle-help-rule '(helpful-mode :custom framey--custom-help-rule))
-
 (defconst framey-pos-info
   (ht ("*helm semantic/imenu*"  (make-framey-pos-info :height 20 :width 45))
       ("*helm mini*"            (make-framey-pos-info :height 12 :width 100))
@@ -128,16 +126,6 @@ Sets the frame in the upper center based on INFO."
     ;; Border won't appear otherwise
     (select-frame (selected-frame))
     (selected-window)))
-
-;;; Helpful -----------------------------------
-
-(defun framey--custom-help-rule (buffer __alist __plist)
-  "Custom shackle rule to show helpful BUFFER using framey."
-  (framey--display buffer))
-
-(with-eval-after-load 'helpful
-  (with-no-warnings
-    (define-key helpful-mode-map [remap quit-window] #'framey-quit-window)))
 
 ;;;###autoload
 (define-minor-mode framey-mode
