@@ -113,7 +113,7 @@ Sets the frame in the upper center based on INFO."
           (line-spacing . 0)
           (unsplittable . t)
           (no-other-frame . t)
-          (minibuffer . nil)
+          (minibuffer . t) ;; required for border
           (no-special-glyphs . t)
           (undecorated . t)
           (vertical-scroll-bars . nil)
@@ -123,8 +123,6 @@ Sets the frame in the upper center based on INFO."
     (delete-other-windows)
     (setf truncate-lines t)
     (setf mode-line-format nil)
-    ;; Border won't appear otherwise
-    (select-frame (selected-frame))
     (selected-window)))
 
 ;;;###autoload
