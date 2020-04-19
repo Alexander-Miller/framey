@@ -82,6 +82,10 @@ Otherwise calls `quit-window' with given prefix ARG."
         (x-focus-frame parent))
     (quit-window arg)))
 
+(defun framey--on-kill (frame)
+  (-when-let (parent (frame-parent frame))
+    (select-frame-set-input-focus parent)))
+
 (define-inline framey--poshandler (width)
   "Framey's position handler.
 Sets the frame in the upper center based on INFO."
@@ -123,6 +127,7 @@ Sets the frame in the upper center based on INFO."
     (delete-other-windows)
     (setf truncate-lines t)
     (setf mode-line-format nil)
+    (add-hook 'delete-frame-functions #'framey--on-kill)
     (selected-window)))
 
 ;;;###autoload
