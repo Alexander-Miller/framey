@@ -128,6 +128,7 @@ Sets the frame in the upper center based on INFO."
     (setf truncate-lines t)
     (setf mode-line-format nil)
     (add-hook 'delete-frame-functions #'framey--on-kill)
+    (select-frame-set-input-focus (selected-frame) :norecord)
     (selected-window)))
 
 ;;;###autoload
