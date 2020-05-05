@@ -102,7 +102,6 @@ Sets the frame in the upper center based on INFO."
          (height (framey-pos-info-height inf))
          (width  (framey-pos-info-width inf))
          (pos    (framey--poshandler width)))
-    (setf (buffer-local-value 'mode-line-format buffer) nil)
     (select-window
      (display-buffer-in-child-frame
       buffer
@@ -129,6 +128,7 @@ Sets the frame in the upper center based on INFO."
     (setf mode-line-format nil)
     (add-hook 'delete-frame-functions #'framey--on-kill)
     (select-frame-set-input-focus (selected-frame) :norecord)
+    (set-window-parameter (selected-window) 'mode-line-format 'none)
     (selected-window)))
 
 ;;;###autoload
