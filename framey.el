@@ -38,8 +38,8 @@
 (cl-defstruct (framey-pos-info
                (:conc-name framey-pos-info->)
                (:constructor framey-pos-info))
-  height
-  width
+  (height framey-default-height)
+  (width framey-default-width)
   (pos 'top))
 
 (defconst framey-pos-info
@@ -53,7 +53,7 @@
       ("*helm org inbuffer*"    (framey-pos-info :height 25 :width 75))
       ("*helm-mode-org-refile*" (framey-pos-info :height 20 :width 100))
       ('helpful-mode            (framey-pos-info :height 35 :width 82))
-      (" *SWIPER*"              (framey-pos-info :height 4  :width 80 :pos 'bottom))))
+      (" *SWIPER*"              (framey-pos-info :height 5  :width 80 :pos 'bottom))))
 
 (defvar framey--enable-functions nil)
 

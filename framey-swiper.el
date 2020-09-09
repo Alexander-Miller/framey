@@ -29,7 +29,8 @@ See also `ivy-display-functions-alist'."
 (defun framey--setup-swiper-frame (&rest _)
   "Create a frame for swiper."
   (setf framey--swiper-buffer (get-buffer-create " *SWIPER*"))
-  (framey--display framey--swiper-buffer :keep-focus))
+  (-let [framey-show-minibuffer nil]
+    (framey--display framey--swiper-buffer :keep-focus)))
 
 (defun framey--cleanup-swiper ()
   "Delete swiper's framey when the search is done."
