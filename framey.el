@@ -130,7 +130,7 @@ and do NOT select it."
                (line-spacing . 0)
                (unsplittable . t)
                (no-other-frame . t)
-               (minibuffer . t) ;; required for border
+               (minibuffer . ,framey-show-minibuffer)
                (no-special-glyphs . t)
                (undecorated . t)
                (vertical-scroll-bars . nil)

@@ -12,7 +12,9 @@
 
 (defun framey--custom-help-rule (buffer __alist __plist)
   "Custom shackle rule to show helpful BUFFER using framey."
-  (framey--display buffer))
+  ;; XXX need a minibuffer here or the frame won't have a border with helpful
+  (-let [framey-show-minibuffer t]
+    (framey--display buffer)))
 
 (define-key helpful-mode-map [remap quit-window] #'framey-quit-window)
 
