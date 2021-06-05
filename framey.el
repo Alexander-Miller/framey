@@ -52,6 +52,7 @@
       ("*helm locate*"          (framey-pos-info :height 25 :width 100))
       ("*helm org inbuffer*"    (framey-pos-info :height 25 :width 75))
       ("*helm-mode-org-refile*" (framey-pos-info :height 20 :width 100))
+      ("*Helm Info*"            (framey-pos-info :height 20 :width 120))
       ('helpful-mode            (framey-pos-info :height 35 :width 82))
       (" *SWIPER*"              (framey-pos-info :height 5  :width 80 :pos 'bottom))))
 
